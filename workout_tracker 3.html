@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Workout Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #242424;
+    --border: #2e2e2e;
+    --accent: #c8f135;
+    --accent2: #a8d020;
+    --text: #f0f0f0;
+    --muted: #888;
+    --danger: #ff4444;
+    --blue: #4fa3e0;
+    --gym-color: #4fa3e0;
+    --home-color: #c8f135;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .app-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: color 0.15s;
+  }
+  .nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .nav-btn.active { color: var(--accent); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px; }
+  .screen.active { display: block; }
+
+  /* WEEK NAV */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .week-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 6px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .week-btn:active { background: var(--border); }
+  .week-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  /* DAY CARDS */
+  .day-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .day-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .day-card-header:active { background: var(--bg3); }
+  .day-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .day-number {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .day-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+  .day-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-gym { background: rgba(79,163,224,0.15); color: var(--gym-color); border: 1px solid rgba(79,163,224,0.3); }
+  .badge-home { background: rgba(200,241,53,0.12); color: var(--home-color); border: 1px solid rgba(200,241,53,0.25); }
+  .badge-rest { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .chevron { color: var(--muted); transition: transform 0.2s; font-size: 18px; }
+  .day-card.open .chevron { transform: rotate(180deg); }
+
+  .day-card-body { display: none; border-top: 1px solid var(--border); }
+  .day-card.open .day-card-body { display: block; }
+
+  /* PROGRESS BAR */
+  .day-progress-bar {
+    height: 3px;
+    background: var(--bg3);
+  }
+  .day-progress-fill {
+    height: 3px;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+
+  /* EXERCISE ROWS */
+  .ex-row {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .ex-info { flex: 1; }
+  .ex-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .ex-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .ex-done-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ex-done-btn.done { background: rgba(200,241,53,0.15); color: var(--accent); border-color: rgba(200,241,53,0.4); }
+
+  /* SETS TABLE */
+  .sets-table { width: 100%; }
+  .sets-head {
+    display: grid;
+    grid-template-columns: 36px 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 0 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .sets-head span, .set-row span { text-align: center; }
+  .set-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .set-num {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .set-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    padding: 7px 4px;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+  .set-input::-webkit-outer-spin-button,
+  .set-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .set-input:focus { outline: none; border-color: var(--accent); background: #1e2500; }
+  .set-input.logged { border-color: rgba(200,241,53,0.4); background: rgba(200,241,53,0.07); }
+  .set-check-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 7px;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+    line-height: 1;
+  }
+  .set-check-btn.done { background: rgba(200,241,53,0.15); color: var(--accent); border-color: rgba(200,241,53,0.4); }
+
+  /* REST MESSAGE */
+  .rest-msg {
+    padding: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* COMPLETE BANNER */
+  .complete-banner {
+    margin: 0 14px 14px;
+    background: rgba(200,241,53,0.1);
+    border: 1px solid rgba(200,241,53,0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: none;
+  }
+  .complete-banner.show { display: block; }
+
+  /* STATS SCREEN */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-unit { font-size: 14px; color: var(--muted); font-family: 'Barlow', sans-serif; }
+
+  .history-section { margin-top: 4px; }
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .history-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .history-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .history-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .history-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+  }
+  .empty-msg {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 32px 16px;
+  }
+
+  /* GUIDE SCREEN */
+  .guide-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .guide-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .guide-text { font-size: 14px; color: #ccc; line-height: 1.6; }
+
+  /* RESET BTN */
+  .reset-btn {
+    background: rgba(255,68,68,0.1);
+    border: 1px solid rgba(255,68,68,0.3);
+    color: var(--danger);
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">Workout Tracker</div>
+  <div class="app-sub">181cm · 83kg · 5yr exp · Gym ×2 + Home ×3</div>
+</div>
+
+<!-- SCREENS -->
+<div id="screen-workout" class="screen active"></div>
+<div id="screen-stats" class="screen"></div>
+<div id="screen-guide" class="screen"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showScreen('workout', this)">
+    <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18"/><circle cx="6.5" cy="6.5" r="1.5"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>
+    Program
+  </button>
+  <button class="nav-btn" onclick="showScreen('stats', this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
+    Progress
+  </button>
+  <button class="nav-btn" onclick="showScreen('guide', this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 16v-4M12 8h.01"/></svg>
+    Guide
+  </button>
+</nav>
+
+<script>
+const PROGRAM = [
+  {
+    day: "Day 1", label: "Legs", location: "gym",
+    exercises: [
+      { name: "Barbell back squat", sets: 4, reps: "6–8", note: "Main compound — go heavy, RIR 1" },
+      { name: "Leg press", sets: 4, reps: "8–10", note: "Wide stance for more glutes" },
+      { name: "Walking lunges", sets: 3, reps: "10 each", note: "Dumbbell in each hand" },
+      { name: "Leg curl (machine)", sets: 3, reps: "10–12", note: "Control the eccentric" },
+      { name: "Leg extension (machine)", sets: 3, reps: "12–15", note: "Squeeze at top" },
+      { name: "Standing calf raise", sets: 4, reps: "15–20", note: "Pause 1s at top" }
+    ]
+  },
+  {
+    day: "Day 2", label: "Chest + Triceps", location: "home",
+    exercises: [
+      { name: "Dumbbell bench press", sets: 4, reps: "8–10", note: "30–40 kg DBs on bench" },
+      { name: "Incline dumbbell press", sets: 3, reps: "10–12", note: "Bench inclined ~30°" },
+      { name: "Dumbbell fly", sets: 3, reps: "12–15", note: "Deep stretch, light weight" },
+      { name: "DB skull crusher", sets: 3, reps: "10–12", note: "Elbows tucked in" },
+      { name: "Overhead triceps ext.", sets: 3, reps: "10–12", note: "One heavy DB" },
+      { name: "Close-grip push-ups", sets: 3, reps: "To failure", note: "Finisher" }
+    ]
+  },
+  {
+    day: "Day 3", label: "Back + Biceps", location: "gym",
+    exercises: [
+      { name: "Conventional deadlift", sets: 4, reps: "5–6", note: "MAIN LIFT — go heavy, RIR 1" },
+      { name: "Barbell bent-over row", sets: 4, reps: "6–8", note: "Builds thickness — rhomboids + lats" },
+      { name: "Pull-ups / Lat pulldown", sets: 4, reps: "8–10", note: "Builds width — control eccentric" },
+      { name: "Seated cable row", sets: 3, reps: "10–12", note: "Wide + close grip alternating weeks" },
+      { name: "Face pulls", sets: 3, reps: "15–20", note: "Rear delt + rotator cuff health" },
+      { name: "Barbell curl", sets: 3, reps: "10–12", note: "" },
+      { name: "Hammer curl", sets: 2, reps: "12–15", note: "Brachialis + brachioradialis" }
+    ]
+  },
+  {
+    day: "Day 4", label: "Shoulders", location: "home",
+    exercises: [
+      { name: "DB overhead press", sets: 4, reps: "8–10", note: "Seated or standing" },
+      { name: "DB Arnold press", sets: 3, reps: "10–12", note: "Full rotation, all delt heads" },
+      { name: "DB lateral raise", sets: 4, reps: "12–15", note: "Strict form, light weight" },
+      { name: "DB rear delt fly", sets: 3, reps: "15", note: "Bent over, squeeze rear delts" },
+      { name: "DB upright row", sets: 3, reps: "12", note: "Heavy DBs, elbows above wrists" },
+      { name: "Kettlebell halo", sets: 3, reps: "10 each dir.", note: "Shoulder mobility — warm-down" }
+    ]
+  },
+  {
+    day: "Day 5", label: "Arms + Core", location: "home",
+    exercises: [
+      { name: "DB curl (heavy)", sets: 4, reps: "8–10", note: "30–40 kg DBs" },
+      { name: "Concentration curl", sets: 3, reps: "12 each", note: "Full squeeze at top, slow eccentric" },
+      { name: "Overhead triceps ext.", sets: 4, reps: "10–12", note: "Heavy DB" },
+      { name: "Triceps kickback", sets: 3, reps: "12–15", note: "Strict form, no swinging" },
+      { name: "Plank hold", sets: 3, reps: "45–60 s", note: "Glutes and core tight" },
+      { name: "KB Russian twist", sets: 3, reps: "20 total", note: "16 kg KB" },
+      { name: "KB farmer carry", sets: 3, reps: "30 m", note: "One KB per hand if possible" }
+    ]
+  },
+  { day: "Day 6", label: "Rest", location: "rest", exercises: [] },
+  { day: "Day 7", label: "Rest / Mobility", location: "rest", exercises: [] }
+];
+
+const GUIDE = [
+  { title: "🪖 Belt — kada naudoti?", text: "Diržas padeda stabilizuoti pilvo spaudimą (intra-abdominal pressure) sunkių kėlimų metu.\n\n✅ NAUDOK:\n   • Deadlift @ 85%+ PR (tau: 170+ kg)\n   • Squat @ 85%+ PR (tau: 136+ kg)\n   • Bet kokio sunkaus compound seto paskutiniuose 1–2 setuose\n\n❌ NENAUDOK:\n   • Apšilimo setuose — leisk nugarai pačiai stabilizuotis\n   • Isolation pratimuose (curl, lateral raise ir pan.)\n   • Lengvuose darbo setuose — core turi dirbti\n\n💡 Diržas nėra ramentai — jei visada naudoji net su 60 kg, core neišsivysto. Naudok tik ten kur svoris tikrai reikalauja." },
+  { title: "🪝 Straps — kada naudoti?", text: "Straps leidžia gniaužtui nenukristi kai nugaros raumenys dar gali dirbti.\n\n✅ NAUDOK:\n   • Deadlift darbo setuose (155–170 kg) — gripas čia nereikalingas, nugara svarbi\n   • Barbell row sunkiuose setuose\n   • Seated cable row, lat pulldown — dideliuose svorių setuose\n\n❌ NENAUDOK:\n   • Apšilimo setuose\n   • Biceps curl — gripas yra dalis pratimo\n   • Jei nori stiprinti gniaužtą — daryk vieną setą be strapų\n\n💡 Taisyklė: jei gniaužtas krenta anksčiau nei nugaros raumenys — imk strapsus. Jei nugaros raumenys krenta pirmi — strapsai nepadės, tiesiog silpna nugara." },
+  { title: "🔥 Warm-up — Legs day (Squat PR: 160 kg)", text: "1. 5 min bike or treadmill walk.\n2. Dynamic: leg swings, hip circles, bodyweight squats × 10.\n3. Squat warm-up sets:\n   • 1×10 @ 60 kg (empty bar)\n   • 1×5 @ 90 kg\n   • 1×3 @ 110 kg\n   • 1×2 @ 130 kg\n   • Working sets: 4×6–8 @ 120–135 kg\n\n💡 Darbinis svoris = ~75–85% PR.\nKai 4×8 tampa lengva — pridėk 2.5 kg." },
+  { title: "🔥 Warm-up — Back day (Deadlift PR: 200 kg)", text: "1. 5 min bike arba lengvas kardio.\n2. Hip hinge mobilumas: 10 × bodyweight RDL, cat-cow × 10.\n3. Deadlift warm-up sets:\n   • 1×8 @ 80 kg\n   • 1×5 @ 120 kg\n   • 1×3 @ 150 kg\n   • 1×1 @ 170 kg\n   • Working sets: 4×5–6 @ 155–170 kg\n\n💡 Darbinis svoris = ~80–87% PR.\nDeadlift progresą matuok kas 2 sav. — šis liftas kaupiasi lėčiau." },
+  { title: "🔥 Warm-up — Home days (Chest / Shoulders / Arms)", text: "1. 3–5 min jumping jacks or jump rope to raise heart rate.\n2. Shoulder circles — 30 sec forward, 30 sec backward.\n3. Band pull-aparts or light lateral raises × 15 reps (activates rotator cuff).\n4. 1–2 warm-up sets on first exercise @ 50–60% weight before working sets.\nHome days are lighter so warm-up can be shorter — but never skip it." },
+  { title: "❄️ Cool-down (after every session)", text: "5–10 min stretching the muscles you trained:\n• Legs: quad stretch, hamstring stretch, pigeon pose — 30 sec each.\n• Back: child's pose, lat stretch on rack — 30 sec each.\n• Chest/Shoulders: doorway chest stretch, cross-body shoulder stretch.\nStretching after training while muscles are warm improves flexibility and reduces soreness." },
+  { title: "Deadlift is king on back day", text: "Always start back day with conventional deadlift when fresh. 4×5–6 at RPE 8–9. This is the biggest mass builder in the program — don't skip it or do it tired." },
+  { title: "Progressive overload", text: "If you hit the top of the rep range on all sets → add 2.5–5 kg next week. Log every set weight so you can track this." },
+  { title: "RIR (Reps In Reserve)", text: "Compounds: RIR 1 (1 rep left in tank). Isolation last set: RIR 0 (failure is OK). Research shows RIR 1–3 gives same hypertrophy as failure with less fatigue." },
+  { title: "Optimal weekly volume", text: "12–20 sets per muscle per week. This program hits that range for every group. Don't add more sets — recover instead." },
+  { title: "Rest periods", text: "Compounds (squat, deadlift, row): 2–3 min. Isolation: 60–90 s. Rushing rest = weaker sets = less growth." },
+  { title: "Nutrition", text: "At 83 kg for hypertrophy: 165–180 g protein/day. Slight caloric surplus +200–300 kcal. Protein timing matters less than daily total." },
+  { title: "Sleep", text: "7–9 hours mandatory. Most muscle protein synthesis happens during sleep. The 2 rest days are not optional — use them." }
+];
+
+// STATE
+let currentWeek = 1;
+let logs = {};
+
+function loadLogs() {
+  try { logs = JSON.parse(localStorage.getItem('wt_logs') || '{}'); } catch(e) { logs = {}; }
+  currentWeek = parseInt(localStorage.getItem('wt_week') || '1');
+}
+
+function saveLogs() {
+  try {
+    localStorage.setItem('wt_logs', JSON.stringify(logs));
+    localStorage.setItem('wt_week', currentWeek);
+  } catch(e) {}
+}
+
+function getLog(week, dayIdx, exIdx, setIdx, field) {
+  const k = `w${week}_d${dayIdx}_e${exIdx}_s${setIdx}_${field}`;
+  return logs[k] || '';
+}
+
+function setLog(week, dayIdx, exIdx, setIdx, field, val) {
+  const k = `w${week}_d${dayIdx}_e${exIdx}_s${setIdx}_${field}`;
+  logs[k] = val;
+  saveLogs();
+}
+
+function getDoneFlag(week, dayIdx, exIdx) {
+  return logs[`w${week}_d${dayIdx}_e${exIdx}_done`] === '1';
+}
+function setDoneFlag(week, dayIdx, exIdx, val) {
+  logs[`w${week}_d${dayIdx}_e${exIdx}_done`] = val ? '1' : '0';
+  saveLogs();
+}
+
+// SCREENS
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'workout') renderWorkout();
+  if (name === 'stats') renderStats();
+  if (name === 'guide') renderGuide();
+}
+
+// WORKOUT SCREEN
+function renderWorkout() {
+  const c = document.getElementById('screen-workout');
+  let html = `<div class="week-nav">
+    <button class="week-btn" onclick="changeWeek(-1)">← Prev</button>
+    <span class="week-label">Week ${currentWeek}</span>
+    <button class="week-btn" onclick="changeWeek(1)">Next →</button>
+  </div>`;
+
+  PROGRAM.forEach((day, di) => {
+    const badgeClass = day.location === 'gym' ? 'badge-gym' : day.location === 'home' ? 'badge-home' : 'badge-rest';
+    const badgeText = day.location === 'gym' ? '🏋️ Gym' : day.location === 'home' ? '🏠 Home' : '😴 Rest';
+
+    let progress = 0;
+    let total = day.exercises.length;
+    if (total > 0) {
+      day.exercises.forEach((_, ei) => { if (getDoneFlag(currentWeek, di, ei)) progress++; });
+    }
+    const allDone = total > 0 && progress === total;
+    const pct = total > 0 ? Math.round(progress / total * 100) : 0;
+
+    html += `<div class="day-card" id="daycard-${di}">
+      <div class="day-card-header" onclick="toggleDay(${di})">
+        <div class="day-title-wrap">
+          <span class="day-number">${day.day}</span>
+          <span class="day-name">${day.label}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="day-badge ${badgeClass}">${badgeText}</span>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%"></div></div>
+      <div class="day-card-body" id="daybody-${di}">`;
+
+    if (day.exercises.length === 0) {
+      html += `<div class="rest-msg">Rest day — recovery is part of the program.</div>`;
+    } else {
+      day.exercises.forEach((ex, ei) => {
+        const done = getDoneFlag(currentWeek, di, ei);
+        html += `<div class="ex-row">
+          <div class="ex-header">
+            <div class="ex-info">
+              <div class="ex-name">${ex.name}</div>
+              <div class="ex-meta">${ex.sets} sets × ${ex.reps}${ex.note ? ' · ' + ex.note : ''}</div>
+            </div>
+            <button class="ex-done-btn ${done ? 'done' : ''}" id="donebtn-${di}-${ei}" onclick="toggleExDone(${di},${ei})">${done ? '✓ Done' : 'Done'}</button>
+          </div>
+          <div class="sets-table">
+            <div class="sets-head"><span>#</span><span>kg</span><span>Reps</span><span>✓</span></div>`;
+        for (let s = 0; s < ex.sets; s++) {
+          const w = getLog(currentWeek, di, ei, s, 'w');
+          const r = getLog(currentWeek, di, ei, s, 'r');
+          const sc = getLog(currentWeek, di, ei, s, 'c') === '1';
+          html += `<div class="set-row">
+            <span class="set-num">${s+1}</span>
+            <input class="set-input ${w ? 'logged' : ''}" type="number" inputmode="decimal" placeholder="—" value="${w}" onchange="logSet(${di},${ei},${s},'w',this.value)" />
+            <input class="set-input ${r ? 'logged' : ''}" type="number" inputmode="numeric" placeholder="—" value="${r}" onchange="logSet(${di},${ei},${s},'r',this.value)" />
+            <button class="set-check-btn ${sc ? 'done' : ''}" id="sc-${di}-${ei}-${s}" onclick="toggleSetCheck(${di},${ei},${s})">✓</button>
+          </div>`;
+        }
+        html += `</div></div>`;
+      });
+
+      html += `<div class="complete-banner ${allDone ? 'show' : ''}" id="banner-${di}">🎯 Session complete!</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  c.innerHTML = html;
+}
+
+function changeWeek(d) {
+  currentWeek = Math.max(1, Math.min(16, currentWeek + d));
+  saveLogs();
+  renderWorkout();
+}
+
+function toggleDay(di) {
+  const card = document.getElementById('daycard-' + di);
+  card.classList.toggle('open');
+}
+
+function logSet(di, ei, si, field, val) {
+  setLog(currentWeek, di, ei, si, field, val);
+  const inp = document.querySelector(`#daybody-${di} .set-row:nth-child(${si+2}) .set-input`);
+  // update logged styling
+  const inputs = document.querySelectorAll(`#daybody-${di} .ex-row:nth-child(${ei+1}) .set-row:nth-child(${si+1}) .set-input`);
+}
+
+function toggleSetCheck(di, ei, si) {
+  const btn = document.getElementById(`sc-${di}-${ei}-${si}`);
+  const cur = getLog(currentWeek, di, ei, si, 'c') === '1';
+  setLog(currentWeek, di, ei, si, 'c', cur ? '0' : '1');
+  btn.classList.toggle('done', !cur);
+}
+
+function toggleExDone(di, ei) {
+  const cur = getDoneFlag(currentWeek, di, ei);
+  setDoneFlag(currentWeek, di, ei, !cur);
+  const btn = document.getElementById(`donebtn-${di}-${ei}`);
+  btn.classList.toggle('done', !cur);
+  btn.textContent = !cur ? '✓ Done' : 'Done';
+  // update progress bar
+  const day = PROGRAM[di];
+  let progress = 0;
+  day.exercises.forEach((_, idx) => { if (getDoneFlag(currentWeek, di, idx)) progress++; });
+  const pct = Math.round(progress / day.exercises.length * 100);
+  const fill = document.querySelector(`#daycard-${di} .day-progress-fill`);
+  if (fill) fill.style.width = pct + '%';
+  const banner = document.getElementById('banner-' + di);
+  if (banner) banner.classList.toggle('show', progress === day.exercises.length);
+}
+
+// STATS SCREEN
+function renderStats() {
+  let totalSessions = 0;
+  let totalWeeks = 0;
+  const weeksSeen = new Set();
+  const history = [];
+
+  Object.keys(logs).forEach(k => {
+    if (!k.endsWith('_done') || logs[k] !== '1') return;
+    const parts = k.match(/w(\d+)_d(\d+)_e(\d+)_done/);
+    if (!parts) return;
+    weeksSeen.add(parseInt(parts[1]));
+  });
+
+  PROGRAM.forEach((day, di) => {
+    if (day.exercises.length === 0) return;
+    for (let w = 1; w <= 16; w++) {
+      const done = day.exercises.filter((_, ei) => getDoneFlag(w, di, ei)).length;
+      if (done > 0) {
+        history.push({ week: w, day: day.day, label: day.label, done, total: day.exercises.length });
+        if (done === day.exercises.length) totalSessions++;
+      }
+    }
+  });
+
+  history.sort((a,b) => b.week - a.week || b.done - a.done);
+  totalWeeks = weeksSeen.size;
+
+  const c = document.getElementById('screen-stats');
+  c.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Sessions done</div><div class="stat-value">${totalSessions}</div></div>
+      <div class="stat-card"><div class="stat-label">Weeks trained</div><div class="stat-value">${totalWeeks}</div></div>
+      <div class="stat-card"><div class="stat-label">Current week</div><div class="stat-value">${currentWeek}</div></div>
+      <div class="stat-card"><div class="stat-label">Total exercises</div><div class="stat-value">${PROGRAM.reduce((a,d)=>a+d.exercises.length,0)} <span class="stat-unit">/ week</span></div></div>
+    </div>
+    <div class="history-section">
+      <div class="section-label">Session history</div>
+      ${history.length === 0
+        ? '<div class="empty-msg">No sessions logged yet.<br>Mark exercises as done to track progress.</div>'
+        : history.map(h => `<div class="history-item">
+            <div>
+              <div class="history-name">${h.day} — ${h.label}</div>
+              <div class="history-meta">Week ${h.week}</div>
+            </div>
+            <div class="history-badge">${h.done}/${h.total} ex</div>
+          </div>`).join('')
+      }
+    </div>
+    <button class="reset-btn" onclick="resetData()">Reset all data</button>
+  `;
+}
+
+function resetData() {
+  if (confirm('Reset ALL workout data? This cannot be undone.')) {
+    localStorage.removeItem('wt_logs');
+    localStorage.removeItem('wt_week');
+    logs = {};
+    currentWeek = 1;
+    renderStats();
+  }
+}
+
+// GUIDE SCREEN
+function renderGuide() {
+  document.getElementById('screen-guide').innerHTML = GUIDE.map(g =>
+    `<div class="guide-card"><div class="guide-title">${g.title}</div><div class="guide-text" style="white-space:pre-line">${g.text}</div></div>`
+  ).join('');
+}
+
+// INIT
+loadLogs();
+renderWorkout();
+</script>
+</body>
+</html>
